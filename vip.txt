@@ -1,0 +1,3 @@
+# VIPs del Cuervos Club. Un display name EXACTO por linea.
+# Entran al salon sin aprobacion y pasan la barrera del VIP.
+# Se edita desde la app (https://nocreo239-hash.github.io/Cuervos-lista/).
