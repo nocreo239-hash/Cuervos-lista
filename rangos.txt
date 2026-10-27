@@ -1,0 +1,4 @@
+# Rangos del Cuervos Club. Una persona por linea:  nombre : rango
+# rango = owner | coowner | mod | salon
+# El nombre es el display name EXACTO de VRChat.
+# Se edita desde la app (https://nocreo239-hash.github.io/Cuervos-lista/).
