@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cuervos Listas</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Cuervos">
+<meta name="theme-color" content="#111014">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="manifest" href="manifest.json">
+<style>
+:root {
+  --bg: #111014; --panel: #1b1a20; --line: #2c2a33; --text: #f2eee9; --muted: #9a95a3;
+  --accent: #DF5926; --danger: #e5484d; --ok: #46a758;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; background: var(--bg); color: var(--text);
+  font: 16px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+body { padding: env(safe-area-inset-top) 16px calc(env(safe-area-inset-bottom) + 88px); }
+header { display: flex; align-items: center; justify-content: space-between; padding: 14px 0 10px; }
+h1 { font-size: 22px; margin: 0; letter-spacing: .5px; }
+h1 span { color: var(--accent); }
+.tabs { display: flex; gap: 6px; background: var(--panel); border-radius: 12px; padding: 4px; margin-bottom: 14px; }
+.tabs button { flex: 1; border: 0; background: none; color: var(--muted); padding: 10px; border-radius: 9px; font-size: 15px; font-weight: 600; }
+.tabs button.on { background: var(--accent); color: #fff; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px; margin-bottom: 14px; }
+.add { display: flex; flex-wrap: wrap; gap: 8px; }
+input, select { font-size: 16px; color: var(--text); background: var(--bg); border: 1px solid var(--line);
+  border-radius: 10px; padding: 11px 12px; min-width: 0; }
+input { flex: 1 1 180px; }
+select { flex: 0 0 auto; }
+button.btn { border: 0; border-radius: 10px; padding: 11px 16px; font-size: 16px; font-weight: 600; background: var(--accent); color: #fff; }
+button.ghost { background: none; border: 1px solid var(--line); color: var(--text); }
+h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin: 18px 4px 8px; }
+ul { list-style: none; margin: 0; padding: 0; }
+li { display: flex; align-items: center; gap: 10px; padding: 11px 12px; border-bottom: 1px solid var(--line); }
+li:last-child { border-bottom: 0; }
+li .n { flex: 1; word-break: break-all; }
+li.nuevo .n::after { content: " nuevo"; color: var(--ok); font-size: 12px; }
+li.borrar .n { text-decoration: line-through; color: var(--muted); }
+li button { border: 0; background: none; color: var(--danger); font-size: 14px; padding: 6px; }
+li.borrar button { color: var(--muted); }
+.lista { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+.vacio { color: var(--muted); padding: 12px; }
+.barra { position: fixed; left: 0; right: 0; bottom: 0; padding: 12px 16px calc(env(safe-area-inset-bottom) + 12px);
+  background: rgba(17,16,20,.94); border-top: 1px solid var(--line); display: flex; gap: 10px; align-items: center; }
+.barra .estado { flex: 1; color: var(--muted); font-size: 14px; }
+.barra .btn:disabled { opacity: .4; }
+.toast { position: fixed; left: 16px; right: 16px; top: calc(env(safe-area-inset-top) + 10px); padding: 12px 14px; border-radius: 12px;
+  background: var(--panel); border: 1px solid var(--line); display: none; z-index: 5; }
+.toast.err { border-color: var(--danger); }
+.toast.ok { border-color: var(--ok); }
+p.ayuda { color: var(--muted); font-size: 14px; margin: 8px 0 0; }
+a { color: var(--accent); }
+.oculto { display: none !important; }
+</style>
+</head>
+<body>
+<header>
+  <h1><span>CUERVOS</span> listas</h1>
+  <button class="btn ghost" id="bConfig" style="padding:8px 12px;font-size:14px">Token</button>
+</header>
+
+<div class="toast" id="toast"></div>
+
+<section id="config" class="card oculto">
+  <b>Conectar con GitHub</b>
+  <p class="ayuda">Pegá un token "fine-grained" con permiso <b>Contents: Read and write</b> solo sobre el repo
+    <b>Cuervos-lista</b>. Se guarda únicamente en este teléfono.</p>
+  <div class="add" style="margin-top:10px">
+    <input id="token" type="password" placeholder="github_pat_..." autocomplete="off">
+    <button class="btn" id="bGuardarToken">Guardar</button>
+  </div>
+  <p class="ayuda"><a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">Crear token en GitHub</a></p>
+</section>
+
+<div id="app" class="oculto">
+  <div class="tabs">
+    <button id="tRangos" class="on">Rangos</button>
+    <button id="tBaneos">Baneos</button>
+  </div>
+
+  <section id="vRangos">
+    <div class="card">
+      <div class="add">
+        <input id="rNombre" placeholder="Display name exacto" autocapitalize="off" autocorrect="off" spellcheck="false">
+        <select id="rRango">
+          <option value="salon">Salón</option>
+          <option value="mod">Mod</option>
+          <option value="coowner">Co-owner</option>
+          <option value="owner">Owner</option>
+        </select>
+        <button class="btn" id="bAddRango">Agregar</button>
+      </div>
+    </div>
+    <div id="listaRangos"></div>
+  </section>
+
+  <section id="vBaneos" class="oculto">
+    <div class="card">
+      <div class="add">
+        <input id="bNombre" placeholder="Display name exacto" autocapitalize="off" autocorrect="off" spellcheck="false">
+        <button class="btn" id="bAddBan">Banear</button>
+      </div>
+      <p class="ayuda">Los baneos permanentes no se pueden levantar desde el mundo, solo desde acá.</p>
+    </div>
+    <div class="lista"><ul id="listaBaneos"></ul></div>
+  </section>
+</div>
+
+<div class="barra oculto" id="barra">
+  <span class="estado" id="estado">Cargando…</span>
+  <button class="btn ghost" id="bRecargar">↻</button>
+  <button class="btn" id="bGuardar" disabled>Guardar</button>
+</div>
+
+<script>
+const OWNER = "nocreo239-hash", REPO = "Cuervos-lista", BRANCH = "main";
+const RANGOS = [["owner", "Owners"], ["coowner", "Co-owners"], ["mod", "Mods"], ["salon", "Salón (verificados)"]];
+const $ = id => document.getElementById(id);
+
+// Cada archivo: cabecera (# comentarios), items, sha y los items tal como estaban en GitHub.
+const archivos = {
+  rangos: { path: "rangos.txt", cabecera: [], items: [], orig: [], sha: null },
+  baneos: { path: "baneos.txt", cabecera: [], items: [], orig: [], sha: null },
+};
+
+function leerToken() { try { return localStorage.getItem("cuervosToken") || ""; } catch (e) { return ""; } }
+function guardarToken(t) { try { localStorage.setItem("cuervosToken", t); } catch (e) {} }
+
+function toast(msg, tipo) {
+  const t = $("toast");
+  t.textContent = msg; t.className = "toast " + (tipo || ""); t.style.display = "block";
+  clearTimeout(toast._t); toast._t = setTimeout(() => t.style.display = "none", 3500);
+}
+
+async function api(path, opts) {
+  opts = opts || {};
+  const r = await fetch("https://api.github.com/repos/" + OWNER + "/" + REPO + "/contents/" + path +
+    (opts.method ? "" : "?ref=" + BRANCH + "&t=" + Date.now()), {
+    method: opts.method || "GET",
+    headers: { "Authorization": "Bearer " + leerToken(), "Accept": "application/vnd.github+json" },
+    body: opts.body ? JSON.stringify(opts.body) : undefined,
+    cache: "no-store",
+  });
+  if (!r.ok) {
+    let m = r.status + "";
+    try { m += " " + (await r.json()).message; } catch (e) {}
+    const err = new Error(m); err.status = r.status; throw err;
+  }
+  return r.json();
+}
+
+const b64aTexto = b64 => new TextDecoder().decode(Uint8Array.from(atob(b64.replace(/\n/g, "")), c => c.charCodeAt(0)));
+function textoAb64(txt) {
+  const bytes = new TextEncoder().encode(txt);
+  let s = ""; bytes.forEach(b => s += String.fromCharCode(b));
+  return btoa(s);
+}
+
+// Mismo formato que lee CuervosAccess en el mundo.
+function parsear(clave, texto) {
+  const cab = [], items = [];
+  texto.split("\n").forEach(l => {
+    l = l.trim();
+    if (!l) return;
+    if (l.startsWith("#")) { cab.push(l); return; }
+    if (clave === "baneos") { items.push({ nombre: l }); return; }
+    const c = l.lastIndexOf(":");
+    let nombre = l, rango = "mod";
+    if (c >= 0) { nombre = l.slice(0, c).trim(); rango = l.slice(c + 1).trim().toLowerCase(); }
+    if (rango === "verificado") rango = "salon";
+    if (!RANGOS.some(r => r[0] === rango)) rango = "mod";
+    if (nombre) items.push({ nombre, rango });
+  });
+  return { cab, items };
+}
+
+function serializar(clave) {
+  const a = archivos[clave];
+  const lineas = a.cabecera.slice();
+  a.items.filter(i => !i.borrar).forEach(i =>
+    lineas.push(clave === "baneos" ? i.nombre : i.nombre + " : " + i.rango));
+  return lineas.join("\n") + "\n";
+}
+
+async function cargar() {
+  $("estado").textContent = "Cargando…";
+  try {
+    for (const clave of Object.keys(archivos)) {
+      const a = archivos[clave];
+      const j = await api(a.path);
+      const p = parsear(clave, b64aTexto(j.content));
+      a.sha = j.sha; a.cabecera = p.cab; a.items = p.items;
+      a.orig = p.items.map(i => JSON.stringify([i.nombre, i.rango]));
+    }
+    $("config").classList.add("oculto");
+    $("app").classList.remove("oculto"); $("barra").classList.remove("oculto");
+    render();
+  } catch (e) {
+    if (e.status === 401 || e.status === 403 || e.status === 404) {
+      $("config").classList.remove("oculto");
+      toast("El token no funciona (" + e.message + "). Revisá que tenga acceso a Cuervos-lista.", "err");
+    } else toast("No pude cargar: " + e.message, "err");
+    $("estado").textContent = "Error al cargar";
+  }
+}
+
+function hayCambios() {
+  return Object.keys(archivos).some(k => {
+    const a = archivos[k];
+    const ahora = a.items.filter(i => !i.borrar).map(i => JSON.stringify([i.nombre, i.rango]));
+    return ahora.join("|") !== a.orig.join("|");
+  });
+}
+
+function fila(item, onToggle, etiqueta) {
+  const li = document.createElement("li");
+  if (item.nuevo) li.className = "nuevo";
+  if (item.borrar) li.className = "borrar";
+  const n = document.createElement("span"); n.className = "n"; n.textContent = item.nombre;
+  const b = document.createElement("button"); b.textContent = item.borrar ? "Deshacer" : etiqueta;
+  b.onclick = onToggle;
+  li.append(n, b);
+  return li;
+}
+
+function quitarOToggle(clave, item) {
+  const a = archivos[clave];
+  if (item.nuevo) a.items.splice(a.items.indexOf(item), 1);
+  else item.borrar = !item.borrar;
+  render();
+}
+
+function render() {
+  const cont = $("listaRangos"); cont.innerHTML = "";
+  RANGOS.forEach(([r, titulo]) => {
+    const items = archivos.rangos.items.filter(i => i.rango === r);
+    const h = document.createElement("h2"); h.textContent = titulo + " · " + items.filter(i => !i.borrar).length;
+    const box = document.createElement("div"); box.className = "lista";
+    const ul = document.createElement("ul");
+    if (!items.length) { const v = document.createElement("div"); v.className = "vacio"; v.textContent = "Nadie"; box.append(v); }
+    items.forEach(i => ul.append(fila(i, () => quitarOToggle("rangos", i), "Quitar")));
+    box.append(ul); cont.append(h, box);
+  });
+
+  const ub = $("listaBaneos"); ub.innerHTML = "";
+  if (!archivos.baneos.items.length) { const v = document.createElement("li"); v.className = "vacio"; v.textContent = "Sin baneos"; ub.append(v); }
+  archivos.baneos.items.forEach(i => ub.append(fila(i, () => quitarOToggle("baneos", i), "Desbanear")));
+
+  const c = hayCambios();
+  $("bGuardar").disabled = !c;
+  $("estado").textContent = c ? "Cambios sin guardar" : "Al día con GitHub";
+}
+
+function agregarRango() {
+  const nombre = $("rNombre").value.trim(), rango = $("rRango").value;
+  if (!nombre) return;
+  const a = archivos.rangos;
+  const ya = a.items.find(i => i.nombre === nombre);
+  if (ya) { ya.rango = rango; ya.borrar = false; }
+  else a.items.push({ nombre, rango, nuevo: true });
+  $("rNombre").value = ""; render();
+}
+
+function agregarBan() {
+  const nombre = $("bNombre").value.trim();
+  if (!nombre) return;
+  const a = archivos.baneos;
+  const ya = a.items.find(i => i.nombre === nombre);
+  if (ya) ya.borrar = false;
+  else a.items.push({ nombre, nuevo: true });
+  $("bNombre").value = ""; render();
+}
+
+async function guardar() {
+  $("bGuardar").disabled = true; $("estado").textContent = "Guardando…";
+  try {
+    for (const clave of Object.keys(archivos)) {
+      const a = archivos[clave];
+      const ahora = a.items.filter(i => !i.borrar).map(i => JSON.stringify([i.nombre, i.rango]));
+      if (ahora.join("|") === a.orig.join("|")) continue;
+      const res = await api(a.path, { method: "PUT", body: {
+        message: "App: actualizar " + a.path, content: textoAb64(serializar(clave)), sha: a.sha, branch: BRANCH } });
+      a.sha = res.content.sha;
+    }
+    toast("Guardado. El mundo lo toma en unos minutos.", "ok");
+    await cargar();
+  } catch (e) {
+    if (e.status === 409) toast("La lista cambió en otro lado. Recargá y volvé a hacer el cambio.", "err");
+    else toast("No pude guardar: " + e.message, "err");
+    render();
+  }
+}
+
+$("tRangos").onclick = () => { $("tRangos").classList.add("on"); $("tBaneos").classList.remove("on");
+  $("vRangos").classList.remove("oculto"); $("vBaneos").classList.add("oculto"); };
+$("tBaneos").onclick = () => { $("tBaneos").classList.add("on"); $("tRangos").classList.remove("on");
+  $("vBaneos").classList.remove("oculto"); $("vRangos").classList.add("oculto"); };
+$("bAddRango").onclick = agregarRango;
+$("bAddBan").onclick = agregarBan;
+$("rNombre").onkeydown = e => { if (e.key === "Enter") agregarRango(); };
+$("bNombre").onkeydown = e => { if (e.key === "Enter") agregarBan(); };
+$("bGuardar").onclick = guardar;
+$("bRecargar").onclick = () => { if (!hayCambios() || confirm("¿Descartar los cambios sin guardar?")) cargar(); };
+$("bConfig").onclick = () => { $("config").classList.toggle("oculto"); $("token").value = leerToken(); };
+$("bGuardarToken").onclick = () => { guardarToken($("token").value.trim()); cargar(); };
+window.addEventListener("beforeunload", e => { if (hayCambios()) { e.preventDefault(); e.returnValue = ""; } });
+
+if (leerToken()) cargar(); else $("config").classList.remove("oculto");
+</script>
+</body>
+</html>
