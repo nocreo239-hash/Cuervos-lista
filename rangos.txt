@@ -2,3 +2,5 @@
 # rango = owner | coowner | mod | salon
 # El nombre es el display name EXACTO de VRChat.
 # Se edita desde la app (https://nocreo239-hash.github.io/Cuervos-lista/).
+ALLAN_MARTIAN : owner
+francotrmx : owner
