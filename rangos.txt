@@ -4,3 +4,4 @@
 # Se edita desde la app (https://nocreo239-hash.github.io/Cuervos-lista/).
 ALLAN_MARTIAN : owner
 francotrmx : owner
+lostkiller298 : owner
