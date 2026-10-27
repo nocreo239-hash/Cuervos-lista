@@ -80,6 +80,7 @@ a { color: var(--accent); }
 <div id="app" class="oculto">
   <div class="tabs">
     <button id="tRangos" class="on">Rangos</button>
+    <button id="tVip">VIP</button>
     <button id="tBaneos">Baneos</button>
   </div>
 
@@ -97,6 +98,17 @@ a { color: var(--accent); }
       </div>
     </div>
     <div id="listaRangos"></div>
+  </section>
+
+  <section id="vVip" class="oculto">
+    <div class="card">
+      <div class="add">
+        <input id="vNombre" placeholder="Display name exacto" autocapitalize="off" autocorrect="off" spellcheck="false">
+        <button class="btn" id="bAddVip">Agregar</button>
+      </div>
+      <p class="ayuda">Entran al salón sin que nadie los apruebe y pasan la barrera del VIP. El staff pasa siempre.</p>
+    </div>
+    <div class="lista"><ul id="listaVip"></ul></div>
   </section>
 
   <section id="vBaneos" class="oculto">
@@ -125,6 +137,7 @@ const $ = id => document.getElementById(id);
 // Cada archivo: cabecera (# comentarios), items, sha y los items tal como estaban en GitHub.
 const archivos = {
   rangos: { path: "rangos.txt", cabecera: [], items: [], orig: [], sha: null },
+  vip: { path: "vip.txt", cabecera: [], items: [], orig: [], sha: null },
   baneos: { path: "baneos.txt", cabecera: [], items: [], orig: [], sha: null },
 };
 
@@ -168,7 +181,7 @@ function parsear(clave, texto) {
     l = l.trim();
     if (!l) return;
     if (l.startsWith("#")) { cab.push(l); return; }
-    if (clave === "baneos") { items.push({ nombre: l }); return; }
+    if (clave !== "rangos") { items.push({ nombre: l }); return; }
     const c = l.lastIndexOf(":");
     let nombre = l, rango = "mod";
     if (c >= 0) { nombre = l.slice(0, c).trim(); rango = l.slice(c + 1).trim().toLowerCase(); }
@@ -183,7 +196,7 @@ function serializar(clave) {
   const a = archivos[clave];
   const lineas = a.cabecera.slice();
   a.items.filter(i => !i.borrar).forEach(i =>
-    lineas.push(clave === "baneos" ? i.nombre : i.nombre + " : " + i.rango));
+    lineas.push(clave !== "rangos" ? i.nombre : i.nombre + " : " + i.rango));
   return lineas.join("\n") + "\n";
 }
 
@@ -247,9 +260,11 @@ function render() {
     box.append(ul); cont.append(h, box);
   });
 
-  const ub = $("listaBaneos"); ub.innerHTML = "";
-  if (!archivos.baneos.items.length) { const v = document.createElement("li"); v.className = "vacio"; v.textContent = "Sin baneos"; ub.append(v); }
-  archivos.baneos.items.forEach(i => ub.append(fila(i, () => quitarOToggle("baneos", i), "Desbanear")));
+  [["vip", "listaVip", "Sin VIPs", "Quitar"], ["baneos", "listaBaneos", "Sin baneos", "Desbanear"]].forEach(([clave, id, vacio, etiqueta]) => {
+    const ul = $(id); ul.innerHTML = "";
+    if (!archivos[clave].items.length) { const v = document.createElement("li"); v.className = "vacio"; v.textContent = vacio; ul.append(v); }
+    archivos[clave].items.forEach(i => ul.append(fila(i, () => quitarOToggle(clave, i), etiqueta)));
+  });
 
   const c = hayCambios();
   $("bGuardar").disabled = !c;
@@ -266,14 +281,14 @@ function agregarRango() {
   $("rNombre").value = ""; render();
 }
 
-function agregarBan() {
-  const nombre = $("bNombre").value.trim();
+function agregarSimple(clave, inputId) {
+  const nombre = $(inputId).value.trim();
   if (!nombre) return;
-  const a = archivos.baneos;
+  const a = archivos[clave];
   const ya = a.items.find(i => i.nombre === nombre);
   if (ya) ya.borrar = false;
   else a.items.push({ nombre, nuevo: true });
-  $("bNombre").value = ""; render();
+  $(inputId).value = ""; render();
 }
 
 async function guardar() {
@@ -296,14 +311,17 @@ async function guardar() {
   }
 }
 
-$("tRangos").onclick = () => { $("tRangos").classList.add("on"); $("tBaneos").classList.remove("on");
-  $("vRangos").classList.remove("oculto"); $("vBaneos").classList.add("oculto"); };
-$("tBaneos").onclick = () => { $("tBaneos").classList.add("on"); $("tRangos").classList.remove("on");
-  $("vBaneos").classList.remove("oculto"); $("vRangos").classList.add("oculto"); };
+const PESTANAS = ["Rangos", "Vip", "Baneos"];
+PESTANAS.forEach(p => $("t" + p).onclick = () => PESTANAS.forEach(q => {
+  $("t" + q).classList.toggle("on", q === p);
+  $("v" + q).classList.toggle("oculto", q !== p);
+}));
 $("bAddRango").onclick = agregarRango;
-$("bAddBan").onclick = agregarBan;
+$("bAddVip").onclick = () => agregarSimple("vip", "vNombre");
+$("bAddBan").onclick = () => agregarSimple("baneos", "bNombre");
 $("rNombre").onkeydown = e => { if (e.key === "Enter") agregarRango(); };
-$("bNombre").onkeydown = e => { if (e.key === "Enter") agregarBan(); };
+$("vNombre").onkeydown = e => { if (e.key === "Enter") agregarSimple("vip", "vNombre"); };
+$("bNombre").onkeydown = e => { if (e.key === "Enter") agregarSimple("baneos", "bNombre"); };
 $("bGuardar").onclick = guardar;
 $("bRecargar").onclick = () => { if (!hayCambios() || confirm("¿Descartar los cambios sin guardar?")) cargar(); };
 $("bConfig").onclick = () => { $("config").classList.toggle("oculto"); $("token").value = leerToken(); };
